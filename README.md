@@ -2,6 +2,8 @@
 
 Bare-bones VS Code plugin for Clojure
 
+Please, don't be confused if 'bb' reminds you the [babashka](https://github.com/babashka) project - it's just a coincidence, abbreviation for bare-bones
+
 ## Options
 
  * code formatting allowing custom rules (used [cljstyle](https://github.com/greglook/cljstyle))
