@@ -1,0 +1,15 @@
+;; ./cljstyle config
+{:files {:ignore #{"checkouts" "target"}}
+ :rules {:namespaces {:enabled? false}
+         :comments {:enabled? false}
+         :functions {:enabled? false}
+         :eof-newline {:enabled? false}
+         :blank-lines {:max-consecutive 1 ;; on top level forms only
+                       :padding-lines 1}  ;; on top level forms only
+         :types {:enabled? false}
+         :indentation {:list-indent 1
+                       :indents {flet            [[:block 1]]
+                                 rf/reg-event-fx [[:block 1]]
+                                 rf/reg-event-db [[:block 1]]
+                                 rf/reg-sub      [[:block 1]]
+                                 r/with-let      [[:block 1]]}}}}

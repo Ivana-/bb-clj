@@ -1,0 +1,6 @@
+{:dependencies []
+ :source-paths ["src"]
+ :builds {:extension {:target :node-library
+                      :exports {:activate bb-clj.core/activate
+                                :deactivate bb-clj.core/deactivate}
+                      :output-to "extension.js"}}}

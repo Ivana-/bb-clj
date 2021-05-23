@@ -1,0 +1,7 @@
+node_modules
+.vscode-test/
+*.vsix
+.shadow-cljs/
+.nrepl-port
+extension.js
+repl-output-processor

@@ -1,0 +1,50 @@
+{
+    "name": "bb-clj",
+    "displayName": "bare-bones-clj",
+    "description": "Clojure extension",
+    "version": "0.1.0",
+    "publisher": "ivana",
+    "engines": {
+        "vscode": "^1.23.0"
+    },
+    "categories": [
+        "Programming Languages",
+        "Formatters"
+    ],
+    "activationEvents": [
+        "onLanguage:clojure"
+    ],
+    "main": "./extension",
+    "contributes": {
+        "commands": [
+            {
+                "command": "bb-clj.formatForm",
+                "title": "bb-clj: Format Form"
+            },
+            {
+                "command": "bb-clj.loadFileInTerminal",
+                "title": "bb-clj: Load current File in Active Terminal"
+            },
+            {
+                "command": "bb-clj.runFormInTerminal",
+                "title": "bb-clj: Run Form in Active Terminal"
+            },
+            {
+                "command": "bb-clj.clearTerminalAndDecorations",
+                "title": "bb-clj: Clear Terminal & Decorations"
+            }
+        ]
+    },
+    "scripts": {
+        "clean": "rm -rf .shadow-cljs/; rm -f repl-output-processor; rm -f extension.js; rm -f bb-clj-0.1.0.vsix",
+        "watch":   "npx shadow-cljs watch :extension",
+        "compile": "npx shadow-cljs compile :extension",
+        "release": "npx shadow-cljs release :extension",
+        "compile-c": "gcc -o -Wall ./src/bb_c/repl-output-processor.c -o repl-output-processor; chmod u+x ./repl-output-processor",
+        "build": "npm run clean && npm run compile-c && npm run release",
+        "package": "npm run build && vsce package"
+    },
+    "devDependencies": {
+        "shadow-cljs": "^2.12.5"
+    }
+}
