@@ -62,3 +62,5 @@ Open integrated terminal and start clojure cli repl via this file and redirect i
 ```
 
 Set cursor near some Clojure code form and enjoy the `bb-clj: Run Form in Active Terminal` command
+
+[YouTube stream about it (in russian)](https://www.youtube.com/watch?v=L35im_2hD1E)
