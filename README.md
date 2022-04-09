@@ -2,6 +2,8 @@
 
 Bare-bones VS Code plugin for Clojure
 
+![alt text](https://user-images.githubusercontent.com/10473034/162594446-e55b6bc4-6634-4f3b-9169-975555ceef0e.png "view")
+
 Please, don't be confused if 'bb' reminds you the [babashka](https://github.com/babashka) project - it's just a coincidence, abbreviation for bare-bones
 
 ## Options
