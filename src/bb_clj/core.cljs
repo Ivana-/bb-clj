@@ -99,6 +99,7 @@
 
 (defn format-form [^js text-editor ^js edit]
   (-> (vscode/commands.executeCommand "editor.action.selectToBracket")
+      (.then #(vscode/commands.executeCommand "editor.action.selectToBracket")) ;; set cursor to the end of selection
       (.then (fn [_]
                (let [document (.-document text-editor)
                      selection (.-selection text-editor)
@@ -134,19 +135,28 @@
       (.then #(.sendText vscode/window.activeTerminal text))
       (.catch #(vscode/window.showErrorMessage (str %)))))
 
+(defn- send-to-terminal-via-repl-input-file [text]
+  (let [file-name ".repl-input"]
+    (write-file file-name text)
+    (send-to-terminal (str ",(load-file \"" file-name "\")"))))
+
 (defn load-file-in-terminal [^js text-editor ^js edit]
-  (let [document (.-document text-editor)
-        file-path (.-fileName document)
-        ns-symbol (-> (.-text (.lineAt document 0))
-                      (str/replace #"\(ns\s+" "")
-                      str/trim
-                      symbol)
-        text-to-send (str "(do (load-file \"" file-path "\") (in-ns '" ns-symbol "))")]
-    (send-to-terminal text-to-send)))
+  (-> (vscode/commands.executeCommand "workbench.action.files.save")
+      (.then (fn [_]
+               (let [document (.-document text-editor)
+                     file-path (.-fileName document)
+                     ns-symbol (-> (.-text (.lineAt document 0))
+                                   (str/replace #"\(ns\s+" "")
+                                   str/trim
+                                   symbol)]
+                 (send-to-terminal-via-repl-input-file (str "(do (load-file \"" file-path "\") (symbol \"\"))"))
+                 ;; (send-to-terminal (str "(in-ns '" ns-symbol ")"))
+                 (send-to-terminal (str "(ns " ns-symbol ")")))))))
 
 (defn run-form-in-terminal [^js text-editor ^js edit]
   (when vscode/window.activeTerminal
     (-> (vscode/commands.executeCommand "editor.action.selectToBracket")
+        (.then #(vscode/commands.executeCommand "editor.action.selectToBracket")) ;; set cursor to the end of selection
         (.then (fn [_]
                  (let [document (.-document text-editor)
                        selection (.-selection text-editor)
@@ -154,11 +164,9 @@
                        _ (swap! decorations assoc
                                 :form-range (vscode/Range. (.-start selection) (.-end selection))
                                 :result-range (vscode/Range. (.-end selection) (.-end selection)))
-                       text (.getText document selection)
-                       file-name ".repl-input"]
-                   (write-file file-name text)
-                   (str ",(load-file \"" file-name "\")"))))
-        (.then send-to-terminal)
+                       text (.getText document selection)]
+                   text)))
+        (.then send-to-terminal-via-repl-input-file)
         (.then #(vscode/commands.executeCommand "cancelSelection"))
         (.catch #(vscode/window.showErrorMessage (str %))))))
 
