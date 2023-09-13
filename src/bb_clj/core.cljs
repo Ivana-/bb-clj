@@ -6,6 +6,7 @@
 ;; rm -rf .shadow-cljs/ &&  npx shadow-cljs release :extension --npm
 ;; vsce package
 
+;; lein with-profile +whidbey,+bb repl | $HOME/.vscode/extensions/ivana.bb-clj-0.1.0/repl-output-processor
 
 (def settings (atom nil))
 
@@ -140,34 +141,49 @@
     (write-file file-name text)
     (send-to-terminal (str ",(load-file \"" file-name "\")"))))
 
+(defn- get-selection-text-set-decorations-range [^js text-editor _]
+  (let [document (.-document text-editor)
+        selection (.-selection text-editor)
+        ;; remember current form range for selecting it on result evaluated
+        _ (swap! decorations assoc
+                 :form-range (vscode/Range. (.-start selection) (.-end selection))
+                 :result-range (vscode/Range. (.-end selection) (.-end selection)))
+        text (.getText document selection)]
+    text))
+
 (defn load-file-in-terminal [^js text-editor ^js edit]
-  (-> (vscode/commands.executeCommand "workbench.action.files.save")
-      (.then (fn [_]
-               (let [document (.-document text-editor)
-                     file-path (.-fileName document)
-                     ns-symbol (-> (.-text (.lineAt document 0))
-                                   (str/replace #"\(ns\s+" "")
-                                   str/trim
-                                   symbol)]
-                 (send-to-terminal-via-repl-input-file (str "(do (load-file \"" file-path "\") (symbol \"\"))"))
-                 ;; (send-to-terminal (str "(in-ns '" ns-symbol ")"))
-                 (send-to-terminal (str "(ns " ns-symbol ")")))))))
+  (when vscode/window.activeTerminal
+    (-> (vscode/commands.executeCommand "workbench.action.files.save")
+        (.then (fn [_]
+                 (let [document (.-document text-editor)
+                       file-path (.-fileName document)
+                       ns-symbol (-> (.-text (.lineAt document 0))
+                                     (str/replace #"\(ns\s+" "")
+                                     str/trim
+                                     symbol)]
+                   (send-to-terminal-via-repl-input-file (str "(do (load-file \"" file-path "\") (symbol \"\"))"))
+                   ;; (send-to-terminal (str "(in-ns '" ns-symbol ")"))
+                   (send-to-terminal (str "(ns " ns-symbol ")"))))))))
 
 (defn run-form-in-terminal [^js text-editor ^js edit]
   (when vscode/window.activeTerminal
     (-> (vscode/commands.executeCommand "editor.action.selectToBracket")
         (.then #(vscode/commands.executeCommand "editor.action.selectToBracket")) ;; set cursor to the end of selection
-        (.then (fn [_]
-                 (let [document (.-document text-editor)
-                       selection (.-selection text-editor)
-                       ;; remember current form range for selecting it on result evaluated
-                       _ (swap! decorations assoc
-                                :form-range (vscode/Range. (.-start selection) (.-end selection))
-                                :result-range (vscode/Range. (.-end selection) (.-end selection)))
-                       text (.getText document selection)]
-                   text)))
+        (.then (partial get-selection-text-set-decorations-range text-editor))
         (.then send-to-terminal-via-repl-input-file)
         (.then #(vscode/commands.executeCommand "cancelSelection"))
+        (.catch #(vscode/window.showErrorMessage (str %))))))
+
+(defn go-to-definition [^js text-editor ^js edit]
+  (when vscode/window.activeTerminal
+    (-> (vscode/commands.executeCommand "cursorWordStartLeft")
+        (.then #(vscode/commands.executeCommand "cursorWordEndRightSelect"))
+        (.then (partial get-selection-text-set-decorations-range text-editor))
+        (.then (fn [text]
+                 (send-to-terminal-via-repl-input-file
+                  (str "(when-let [{:keys [file line column]} (meta (resolve '" text "))] (print (str (char 27) \"[1;35m\" \"" text "\" (char 27) \"[0m   \" file \":\" line \":\" column)) (symbol \"\"))"))))
+        (.then #(vscode/commands.executeCommand "cancelSelection"))
+        ;; (.then #(vscode/commands.executeCommand "cursorWordEndRight")) ;; cancel selection oll the occurences
         (.catch #(vscode/window.showErrorMessage (str %))))))
 
 ;; activate/deactivate ------------------------------------------------------------------------------------------
@@ -184,7 +200,8 @@
                            (map (fn [[command callback]] (vscode/commands.registerCommand command callback))))
                       (->> [["bb-clj.formatForm" format-form]
                             ["bb-clj.loadFileInTerminal" load-file-in-terminal]
-                            ["bb-clj.runFormInTerminal" run-form-in-terminal]]
+                            ["bb-clj.runFormInTerminal" run-form-in-terminal]
+                            ["bb-clj.goToDefinition" go-to-definition]]
                            (map (fn [[command callback]] (vscode/commands.registerTextEditorCommand command callback)))))]
     (register-disposable context disposable))
   ;; (vscode/window.showInformationMessage "bb-clj extensions activated")

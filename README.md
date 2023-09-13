@@ -11,6 +11,7 @@ Please, don't be confused if 'bb' reminds you the [babashka](https://github.com/
  * code formatting allowing custom rules (used [cljstyle](https://github.com/greglook/cljstyle))
  * eval forms in REPL opened in integrated terminal
  * load file & switch namespace
+ * show symbol definition link
 
 ## Create installation package
 

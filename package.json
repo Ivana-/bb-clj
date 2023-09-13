@@ -2,6 +2,7 @@
     "name": "bb-clj",
     "displayName": "bare-bones-clj",
     "description": "Clojure extension",
+    "repository": "https://github.com/Ivana-/bb-clj",
     "version": "0.1.0",
     "publisher": "ivana",
     "engines": {
@@ -28,6 +29,10 @@
             {
                 "command": "bb-clj.runFormInTerminal",
                 "title": "bb-clj: Run Form in Active Terminal"
+            },
+            {
+                "command": "bb-clj.goToDefinition",
+                "title": "bb-clj: Show symbol definition link in Active Terminal"
             },
             {
                 "command": "bb-clj.clearTerminalAndDecorations",
